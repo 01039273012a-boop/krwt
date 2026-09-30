@@ -341,7 +341,7 @@ async function sendKRWT() {
     // 주소 형식 확인
     let recipientAddress;
     try {
-      recipientAddress = TonWeb.utils.Address.parse(recipient);
+      recipientAddress = new TonWeb.utils.Address(recipient.trim());
     } catch (e) {
       alert("받는 사람 TON 주소가 올바르지 않습니다.");
       return;
@@ -413,7 +413,7 @@ async function sendKRWT() {
 
     // response_destination = 현재 보내는 사람
     cell.bits.writeAddress(
-      TonWeb.utils.Address.parse(ownerAddress)
+  new TonWeb.utils.Address(ownerAddress)
     );
 
     // custom_payload 없음

@@ -252,7 +252,7 @@ async function loadKRWTBalance() {
     }
 
     // KRWT가 9 decimals 기준인 경우
-    const decimals = 9;
+    const decimals = 6;
 
     const whole = BigInt(rawBalance);
     const divisor = 10n ** BigInt(decimals);

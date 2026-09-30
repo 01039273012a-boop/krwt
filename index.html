@@ -442,6 +442,10 @@ async function sendKRWT() {
     if (!confirmed) return;
 
     // TON Connect 승인 요청
+    alert(
+  "Jetton Wallet RAW:\n" + jettonWalletAddress +
+  "\n\nFriendly:\n" + jettonWalletFriendly
+    );
     await tonConnectUI.sendTransaction({
       validUntil: Math.floor(Date.now() / 1000) + 300,
 

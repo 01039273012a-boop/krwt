@@ -148,7 +148,7 @@
       ↓<br>받기
     </button>
 
-    <button onclick="alert('거래내역 기능은 다음 단계에서 연결합니다.')">
+    <button onclick="showHistory()">
       ≡<br>내역
     </button>
   </div>
@@ -476,6 +476,99 @@ async function sendKRWT() {
 
     alert(
       "KRWT 전송 중 오류가 발생했습니다.\n\n" +
+      (error?.message || String(error))
+    );
+  }
+}  
+
+// ===== KRWT 거래내역 =====
+async function showHistory() {
+  const wallet = tonConnectUI.wallet;
+
+  if (!wallet) {
+    alert("먼저 TON 지갑을 연결해주세요.");
+    return;
+  }
+
+  try {
+    const ownerAddress = wallet.account.address;
+
+    const url =
+      "https://toncenter.com/api/v3/jetton/transfers" +
+      "?owner_address=" + encodeURIComponent(ownerAddress) +
+      "&jetton_master=" + encodeURIComponent(KRWT_MASTER) +
+      "&limit=20" +
+      "&sort=desc";
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("거래내역 조회에 실패했습니다.");
+    }
+
+    const data = await response.json();
+    const transfers = data.jetton_transfers || [];
+
+    if (transfers.length === 0) {
+      alert("KRWT 거래내역이 없습니다.");
+      return;
+    }
+
+    const owner =
+      new TonWeb.utils.Address(ownerAddress)
+        .toString(false);
+
+    const lines = transfers.map(tx => {
+      const source =
+        new TonWeb.utils.Address(tx.source)
+          .toString(false);
+
+      const isOut = source === owner;
+
+      // KRWT decimals = 6
+      const raw = BigInt(tx.amount || "0");
+      const divisor = 1000000n;
+
+      const integerPart = raw / divisor;
+      const decimalPart = raw % divisor;
+
+      let amount = integerPart.toLocaleString();
+
+      if (decimalPart !== 0n) {
+        let fraction =
+          decimalPart.toString().padStart(6, "0");
+
+        fraction = fraction.replace(/0+$/, "");
+
+        amount += "." + fraction;
+      }
+
+      const date =
+        new Date((tx.transaction_now || 0) * 1000);
+
+      const dateText =
+        date.toLocaleString("ko-KR");
+
+      const status =
+        tx.transaction_aborted ? "실패" : "완료";
+
+      return (
+        (isOut ? "↑ 출금" : "↓ 입금") +
+        "  " + amount + " KRWT\n" +
+        dateText + " · " + status
+      );
+    });
+
+    alert(
+      "KRWT 최근 거래내역\n\n" +
+      lines.join("\n\n")
+    );
+
+  } catch (error) {
+    console.error("KRWT history error:", error);
+
+    alert(
+      "거래내역 조회 중 오류가 발생했습니다.\n\n" +
       (error?.message || String(error))
     );
   }

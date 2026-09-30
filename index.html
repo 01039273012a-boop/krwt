@@ -391,6 +391,9 @@ async function sendKRWT() {
 
     const jettonWalletAddress =
       data.jetton_wallets[0].address;
+    const jettonWalletFriendly =
+    new TonWeb.utils.Address(jettonWalletAddress)
+    .toString(true, true, true);
 
     if (!jettonWalletAddress) {
       throw new Error("KRWT Jetton Wallet 주소가 없습니다.");
@@ -444,7 +447,7 @@ async function sendKRWT() {
 
       messages: [
         {
-          address: jettonWalletAddress,
+          address: jettonWalletFriendly,
 
           // Jetton 처리용 TON 가스
           // 실제 사용되지 않은 TON은 컨트랙트 동작에 따라 반환될 수 있음

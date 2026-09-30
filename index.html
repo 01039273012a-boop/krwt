@@ -219,7 +219,110 @@
       '내 TON 주소:\n\n' +
       tonConnectUI.wallet.account.address
     );
+  }// ===== KRWT 실제 메인넷 잔액 조회 =====
+
+const KRWT_MASTER =
+  "EQDFmBWNDuPifn4GTCLN2pddJpZ-HBl-YaJWxeTZdALwOMz0";
+
+async function loadKRWTBalance() {
+
+  const wallet = tonConnectUI.wallet;
+
+  if (!wallet) {
+    return;
   }
+
+  const ownerAddress = wallet.account.address;
+
+  try {
+
+    const url =
+      "https://toncenter.com/api/v3/jetton/wallets" +
+      "?owner_address=" + encodeURIComponent(ownerAddress) +
+      "&jetton_address=" + encodeURIComponent(KRWT_MASTER) +
+      "&limit=1";
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    let rawBalance = "0";
+
+    if (data.jetton_wallets && data.jetton_wallets.length > 0) {
+      rawBalance = data.jetton_wallets[0].balance || "0";
+    }
+
+    // KRWT가 9 decimals 기준인 경우
+    const decimals = 9;
+
+    const whole = BigInt(rawBalance);
+    const divisor = 10n ** BigInt(decimals);
+
+    const integerPart = whole / divisor;
+    const decimalPart = whole % divisor;
+
+    let formatted = integerPart.toLocaleString();
+
+    if (decimalPart !== 0n) {
+
+      let fraction =
+        decimalPart.toString().padStart(decimals, "0");
+
+      fraction = fraction.replace(/0+$/, "");
+
+      formatted += "." + fraction;
+    }
+
+    // 화면에서 "0 KRWT"가 들어있는 큰 숫자 영역 찾기
+    const candidates = document.querySelectorAll("div");
+
+    for (const el of candidates) {
+
+      if (
+        el.textContent.trim() === "0 KRWT" ||
+        el.textContent.trim().match(/^[\d,.]+\sKRWT$/)
+      ) {
+
+        el.textContent = formatted + " KRWT";
+        break;
+
+      }
+    }
+
+    console.log("KRWT raw balance:", rawBalance);
+    console.log("KRWT balance:", formatted);
+
+  } catch (error) {
+
+    console.error("KRWT balance error:", error);
+
+  }
+}
+
+
+// TON 지갑 연결 상태가 변경될 때 실제 KRWT 잔액 조회
+
+tonConnectUI.onStatusChange(wallet => {
+
+  if (wallet) {
+
+    setTimeout(() => {
+      loadKRWTBalance();
+    }, 1000);
+
+  }
+
+});
+
+
+// 이미 연결된 지갑이 있으면 페이지 시작 후 조회
+
+setTimeout(() => {
+
+  if (tonConnectUI.wallet) {
+    loadKRWTBalance();
+  }
+
+}, 1500);
 </script>
 
 </body>
